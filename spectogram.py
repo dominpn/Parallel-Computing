@@ -1,3 +1,5 @@
+import itertools
+
 from mpi4py import MPI
 import numpy as np
 from PyQt5 import QtCore
@@ -70,7 +72,7 @@ class Spectrogram(PlotWidget):
         processed_signal = self.comm.gather(psd, root=0)
         if rank == 0:
             self.img_array = np.roll(self.img_array, -1, 0)
-            self.img_array[-1:] = np.array(processed_signal).ravel()
+            self.img_array[-1:] = list(itertools.chain(*processed_signal))
 
             self.img.setImage(self.img_array, autoLevels=False)
 
