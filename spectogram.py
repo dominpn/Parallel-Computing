@@ -1,11 +1,11 @@
-import itertools
+import json
 
-from mpi4py import MPI
 import numpy as np
 from PyQt5 import QtCore
 from pyqtgraph import PlotWidget, ColorMap, ImageItem
-from scipy.fftpack import dct
+import requests
 
+from encoder import NumpyEncoder
 from recorder import CHUNKS, RATE
 
 
@@ -14,8 +14,6 @@ class Spectrogram(PlotWidget):
 
     def __init__(self):
         super(Spectrogram, self).__init__()
-
-        self.comm = MPI.COMM_WORLD
 
         self.img = ImageItem()
         self.addItem(self.img)
@@ -54,25 +52,8 @@ class Spectrogram(PlotWidget):
         self.setLabel('left', 'Frequency', units='Hz')
 
     def update_graph(self, chunks):
-        rank = self.comm.Get_rank()
-        size = self.comm.Get_size()
-
-        if rank == 0:
-            test_chunks = np.array_split(chunks[:513], size, axis=0)
-
-        else:
-            test_chunks = None
-
-        data = self.comm.scatter(test_chunks, root=0)
-
-        print(f'Process {rank} received {data}')
-        spec = abs(dct(data, 2) / CHUNKS)
-        psd = 20 * np.log10(spec)
-
-        processed_signal = self.comm.gather(psd, root=0)
-        if rank == 0:
+        res = requests.post('http://localhost:5000/', json={"chunks": np.array(chunks[:513]).tolist()})
+        if res.ok:
             self.img_array = np.roll(self.img_array, -1, 0)
-            self.img_array[-1:] = list(itertools.chain(*processed_signal))
-
+            self.img_array[-1:] = res.json()
             self.img.setImage(self.img_array, autoLevels=False)
-
