@@ -7,9 +7,9 @@ from scipy.fftpack import dct
 
 from recorder import CHUNKS
 
-app = Flask(__name__)
-
 comm = MPI.COMM_WORLD
+
+app = Flask(__name__)
 
 
 @app.route("/", methods=['POST'])
@@ -39,4 +39,5 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    if comm.Get_rank() == 0:
+        app.run(host='0.0.0.0', debug=True, port=5000+comm.Get_rank())

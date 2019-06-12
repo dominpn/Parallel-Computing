@@ -1,11 +1,8 @@
-import json
-
 import numpy as np
 from PyQt5 import QtCore
 from pyqtgraph import PlotWidget, ColorMap, ImageItem
 import requests
 
-from encoder import NumpyEncoder
 from recorder import CHUNKS, RATE
 
 
